@@ -27,7 +27,7 @@ class MessageController extends Controller
     // Kembalikan respons JSON
     return response()->json($message, 201);
   }
-  
+
   private function getAnswerForQuestion($question)
   {
     // Logika untuk mendapatkan jawaban berdasarkan pertanyaan (misalnya dari API eksternal)
@@ -37,7 +37,7 @@ class MessageController extends Controller
 
   public function index()
   {
-    $messages = Message::all();
+    $messages = Message::orderBy('createdAt', 'asc')->get();
     return response()->json($messages);
   }
 }
