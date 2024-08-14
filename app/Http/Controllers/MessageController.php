@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Message;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use OpenAI\Laravel\Facades\OpenAI;
 
 class MessageController extends Controller
 {
@@ -14,7 +16,7 @@ class MessageController extends Controller
       'question' => 'required|string',
     ]);
 
-    // Simulasi jawaban untuk pertanyaan (misalnya dari AI atau service eksternal)
+    // Dapatkan jawaban dari OpenAI API
     $answer = $this->getAnswerForQuestion($request->input('question'));
 
     // Simpan pesan ke database
@@ -30,13 +32,32 @@ class MessageController extends Controller
 
   private function getAnswerForQuestion($question)
   {
-    // Logika untuk mendapatkan jawaban berdasarkan pertanyaan (misalnya dari API eksternal)
-    // Untuk simulasi, kita kembalikan jawaban statis
-    return "This is a simulated answer for: " . $question;
+    try {
+      $result = OpenAI::completions()->create([
+        'model' => 'gpt-3.5-turbo-instruct',
+        'prompt' => $question,
+        'max_tokens' => 250,
+      ]);
+
+      return $result->choices[0]->text ?? 'No answer available';
+    } catch (\Exception $e) {
+      Log::error('OpenAI API error: ' . $e->getMessage());
+      dd($e->getMessage()); // Dump the error message for debugging
+      return 'An error occurred while fetching the answer.';
+    }
   }
+
 
   public function index()
   {
+    // $result = OpenAI::completions()->create([
+    //   'model' => 'gpt-3.5-turbo-instruct',
+    //   'prompt' => 'do you have any questions?',
+    //   'max_tokens' => 250,
+    // ]);
+
+    // // Dump the result for debugging
+    // dd($result->choices[0]->text);
     $messages = Message::orderBy('createdAt', 'asc')->get();
     return response()->json($messages);
   }
